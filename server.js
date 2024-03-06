@@ -30,11 +30,13 @@ passport.deserializeUser((obj, done) => {
     done(null, obj);
 });
 
+const sheets = google.sheets({ version: 'v4', auth: process.env.GOOGLE_SHEETS_API_KEY });
+
 // Function to check if user is allowed
 const isUserAllowed = async (profile) => {
     try {
-        const allowedUsersData = await fetchDataFromSpreadSheet(process.env.SPREADSHEET_ID, sheetsToGet=["allowed_google_users"]);
-        const allowedEmails = allowedUsersData["allowed_google_users"].map(row => row[0]);
+        const allowedUsersData = await fetchSheetData(process.env.SPREADSHEET_ID, "allowed_google_users");
+        const allowedEmails = allowedUsersData.map(row => row[0]);
 
         const userEmail = profile.emails[0].value;
         return allowedEmails.includes(userEmail);
@@ -72,7 +74,7 @@ const isAuthenticated = async (req, res, next) => {
                 return next();
             } else {
                 req.logout(() => {
-                    res.redirect('/auth/google');
+                    res.redirect('/');
                 });
             }
         } catch (error) {
@@ -113,38 +115,35 @@ app.get('/logout', (req, res) => {
 // Main Route - Requires Authentication
 app.get('/', isAuthenticated, (req, res) => {
     res.sendFile(__dirname + '/public/real_time_diagram.html');
+    console.log(req.user);
 });
+
+const fetchSheetData = async (spreadsheetId, sheetName) => {
+    const response = await sheets.spreadsheets.values.get({
+        spreadsheetId,
+        range: `${sheetName}`,
+        valueRenderOption: 'UNFORMATTED_VALUE',
+    });
+    return response.data.values;
+};
 
 // Function to fetch data from Google Sheets
 async function fetchDataFromSpreadSheet(spreadsheetId, sheetsToGet = [], sheetsToExclude = []) {
-    // Initialize Google Sheets API
-    const sheets = google.sheets({ version: 'v4', auth: process.env.GOOGLE_SHEETS_API_KEY });
     let sheetNames;
-
-    if (sheetsToGet.length === 0) {
+    if ((sheetsToGet.length !== 0) && (sheetsToExclude.length !== 0)){
+        throw new Error('Error: sheetsToGet and sheetsToExclude are both provided');
+    } else if (sheetsToExclude.length !== 0) {
         const sheetMetadata = await sheets.spreadsheets.get({ spreadsheetId, fields: 'sheets.properties' });
         sheetNames = sheetMetadata.data.sheets
             .filter(sheet => !sheetsToExclude.includes(sheet.properties.title))
             .map(sheet => sheet.properties.title);
-    } else if (sheetsToExclude.length !== 0) {
-        throw new Error('Error: sheetsToGet and sheetsToExclude are both provided');
     } else {
         sheetNames = sheetsToGet;
     }
 
-    const fetchSheetData = async (sheetName) => {
-        const response = await sheets.spreadsheets.values.get({
-            spreadsheetId,
-            range: `${sheetName}`,
-            valueRenderOption: 'UNFORMATTED_VALUE',
-        });
-        return { [sheetName]: response.data.values };
-    };
-
-    const sheetsData = await Promise.all(sheetNames.map(sheetName => fetchSheetData(sheetName)))
-        .then(dataArray => Object.assign({}, ...dataArray));
-
-    return sheetsData;
+    return await Promise.all(sheetNames.map(async (sheetName) => {
+        return { [sheetName]: await fetchSheetData(spreadsheetId, sheetName) };
+    })).then((data) => Object.assign({}, ...data));
 }
 
 // Data Fetching Route - Requires Authentication

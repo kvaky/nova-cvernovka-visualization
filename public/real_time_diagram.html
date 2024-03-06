@@ -90,23 +90,7 @@
             dataTable.addRows(dataTooltip);
             return dataTable;
         }
-
-        const fetchDataAndProcess = async () => {
-            const response = await fetch('/fetch-data');
-            console.log(response);
-            const jsonData = await response.json();
-            console.log(jsonData);
-
-            // Fill the data tables for all sheets
-            Object.entries(jsonData).forEach(([sheetName, sheetData]) => {
-                allDataTables[sheetName] = createDataTable(sheetData);
-            });
-
-            populateSheetSelector();
-            drawChart(Object.keys(allDataTables)[0]);
-            document.getElementById('loadingMessage').style.display = 'none';
-        }
-
+        
         const drawChart = async (sheetName) => {
             const data = allDataTables[sheetName];
 
@@ -141,6 +125,22 @@
                 option.textContent = sheetName;
                 sheetSelector.appendChild(option);
             });
+        }
+
+        const fetchDataAndProcess = async () => {
+            const response = await fetch('/fetch-data');
+            console.log(response);
+            const jsonData = await response.json();
+            console.log(jsonData);
+
+            // Fill the data tables for all sheets
+            Object.entries(jsonData).forEach(([sheetName, sheetData]) => {
+                allDataTables[sheetName] = createDataTable(sheetData);
+            });
+
+            populateSheetSelector();
+            drawChart(Object.keys(allDataTables)[0]);
+            document.getElementById('loadingMessage').style.display = 'none';
         }
 
         google.charts.load('current', { 'packages': ['sankey'] });
