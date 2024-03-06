@@ -1,0 +1,154 @@
+<html>
+<head>
+    <style>
+
+    p {
+        font-family: 'Roboto', sans-serif;
+    }
+
+    #loadingMessage {
+        text-align: center;
+        font-family: 'Roboto', sans-serif;
+        font-size: 2em;
+    }
+
+    #sankey_multiple {
+        width: 100%;
+        height: 100%;
+        white-space: pre-wrap;
+    }
+
+    .dot {
+        opacity: 0; /* Start with dots invisible */
+        animation: dotFade 1.5s infinite; /* Apply the animation */
+    }
+
+    /* Define the keyframes for the animation */
+    @keyframes dotFade {
+        0%, 100% { opacity: 0; }
+        50% { opacity: 1; }
+    }
+
+    /* Stagger the animation for each dot */
+    .dot:nth-child(1) { animation-delay: 0s; }
+    .dot:nth-child(2) { animation-delay: 0.5s; }
+    .dot:nth-child(3) { animation-delay: 1s; }
+
+    </style>
+</head>
+
+<body>
+    <title>NC financie</title>
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+
+    <select id="sheetSelector" onchange="drawChart(this.value)"></select>
+    <div id="loadingMessage">
+        Loading data
+        <span class="dot">.</span><span class="dot">.</span><span class="dot">.</span>
+    </div>        
+    <div id="sankey_multiple"></div>
+    <script type="text/javascript">
+        let allDataTables = {};
+
+        const formatNumber = (num) => {
+            return num.toFixed(0).replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1 ') + ' €';
+        };
+
+        // Fill the data table for a given sheet
+        const createDataTable = (sheetData) => {
+
+            // Compute the sum for each node
+            const isRoot = (node, data) => {
+                return !data.some(row => row[1] === node);
+            };
+            const nodeValues = {};
+            sheetData.slice(1).forEach((row) => {
+                // If the from node is a root, add outgoing values
+                if (isRoot(row[0], sheetData)) {
+                    nodeValues[row[0]] = (nodeValues[row[0]] ?? 0) + row[2];
+                }
+                // If the to node is not a root, add incoming values
+                if (!isRoot(row[1], sheetData)) {
+                    nodeValues[row[1]] = (nodeValues[row[1]] ?? 0) + row[2];
+                }
+            });
+
+            // Add the node values to the node labels (Krátkodobé prenájmy -> Krátkodobé prenájmy: 1000 €)
+            const dataTooltip = sheetData.slice(1).map((row) => {
+                const fromNode = `${row[0]}: ${formatNumber(nodeValues[row[0]])}`;
+                const toNode = `${row[1]}: ${formatNumber(nodeValues[row[1]])}`;
+                const value = row[2];
+                return [fromNode, toNode, value, formatNumber(value)];
+            });
+            
+            // Create the data table
+            const dataTable = new google.visualization.DataTable();
+            dataTable.addColumn('string', 'Odkial');
+            dataTable.addColumn('string', 'Kam');
+            dataTable.addColumn('number', 'Kolko');
+            dataTable.addColumn({type: 'string', role: 'tooltip'});
+            dataTable.addRows(dataTooltip);
+            return dataTable;
+        }
+
+        const fetchDataAndProcess = async () => {
+            const response = await fetch('/fetch-data');
+            console.log(response);
+            const jsonData = await response.json();
+            console.log(jsonData);
+
+            // Fill the data tables for all sheets
+            Object.entries(jsonData).forEach(([sheetName, sheetData]) => {
+                allDataTables[sheetName] = createDataTable(sheetData);
+            });
+
+            populateSheetSelector();
+            drawChart(Object.keys(allDataTables)[0]);
+            document.getElementById('loadingMessage').style.display = 'none';
+        }
+
+        const drawChart = async (sheetName) => {
+            const data = allDataTables[sheetName];
+
+            // Draw the chart
+            const options = {
+                sankey: {
+                    link: {
+                        colorMode: 'source',
+                        color: {
+                            stroke: '#000',
+                            strokeWidth: 0.1,
+                        }
+                    },
+                    node: {
+                        strokeWidth: 0.1,
+                        colors: ['#84c1f1', '#9be364', '#fc8a8c', '#fec051', '#d4a1e3', '#ffff7f', '#1a8be4', '#3ec030'],
+                        nodePadding: 20,
+                    },
+                    iterations: 1024,
+                },
+            };
+            const chart = new google.visualization.Sankey(document.getElementById('sankey_multiple'));
+            chart.draw(data, options);
+        }
+
+        // Populate the sheet selector dropdown
+        const populateSheetSelector = () => {
+            const sheetSelector = document.getElementById('sheetSelector');
+            Object.keys(allDataTables).forEach(sheetName => {
+                const option = document.createElement('option');
+                option.value = sheetName;
+                option.textContent = sheetName;
+                sheetSelector.appendChild(option);
+            });
+        }
+
+        google.charts.load('current', { 'packages': ['sankey'] });
+        google.charts.setOnLoadCallback(fetchDataAndProcess);
+    </script>
+    <p>
+        Hodnota každej položky je vyrátaná ako súčet linkov (link = riadok v tabuľke, z ktorej je diagram vytvorený), ktoré do nej smerujú. Toto neplatí o prvej položke, pretože do nej nejdú žiadne linky, takže táto položka je vyrátaná ako súčet linkov, ktoré z nej vychádzajú.
+    </p>
+</body>
+
+</html>
