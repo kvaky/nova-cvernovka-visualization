@@ -78,11 +78,6 @@ app.get('/login-error', (req, res) => {
     res.send('Unauthorized access: You do not have permission to access this application.');
 });
 
-app.get('/logout', (req, res) => {
-    req.logout();
-    res.redirect('/');
-});
-
 app.get('/', isAuthenticated, (req, res) => {
     res.sendFile(__dirname + '/public/real_time_diagram.html');
     console.log(req.user);
