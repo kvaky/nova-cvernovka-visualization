@@ -9,7 +9,7 @@ const app = express();
 const port = process.env.PORT;
 const sheets = google.sheets({ version: 'v4', auth: process.env.GOOGLE_SHEETS_API_KEY });
 
-app.use(session({ secret: process.env.SESSION_SECRET, resave: false, saveUninitialized: true }));
+app.use(session({ secret: process.env.EXPRESS_SESSION_SECRET, resave: false, saveUninitialized: true }));
 app.use(passport.initialize());
 app.use(passport.session());
 
@@ -79,7 +79,7 @@ app.get('/login-error', (req, res) => {
 });
 
 app.get('/', isAuthenticated, (req, res) => {
-    res.sendFile(__dirname + '/public/real_time_diagram.html');
+    res.sendFile(__dirname + '/public/diagram_view.html');
     console.log(req.user);
 });
 
