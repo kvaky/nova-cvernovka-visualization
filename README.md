@@ -1,6 +1,6 @@
 # Finance flow visualizer
 
-![alt text](preview.png)
+![alt text](img/preview.png)
 
 ## Description
 Web application built with Node.js that displays a sankey diagram from Google Sheets data. For each sheet in a spreadsheet, there is a separate diagram accessible through a dropdown.
@@ -12,11 +12,11 @@ Web application built with Node.js that displays a sankey diagram from Google Sh
   - Column B: Target
   - Column C: Value
 
-    ![example data](data.png)
+    ![example data](img/data.png)
 
 - Create a sheet called `allowed_google_users` with emails of users who should have access to the application.
 
-    ![Example users with access](users.png)
+    ![Example users with access](img/users.png)
 
 ## Installation
 1. Install dependencies using `npm install`
