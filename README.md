@@ -3,7 +3,7 @@
 ![alt text](preview.png)
 
 ## Description
-Web application built with Node.js that displays a sankey diagram from Google Sheets data. For each sheet, in a spreadsheet, there is a separate diagram.
+Web application built with Node.js that displays a sankey diagram from Google Sheets data. For each sheet in a spreadsheet, there is a separate diagram accessible through a dropdown.
 
 ## Data preparation
 
