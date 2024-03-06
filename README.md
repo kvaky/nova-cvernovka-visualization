@@ -12,10 +12,11 @@ Web application built with Node.js that displays a sankey diagram from Google Sh
   - Column B: Target
   - Column C: Value
 
-![example data](data.png)
+    ![example data](data.png)
 
 - Create a sheet called `allowed_google_users` with emails of users who should have access to the application.
-![Example users with access](users.png)
+
+    ![Example users with access](users.png)
 
 ## Installation
 1. Install dependencies using `npm install`
