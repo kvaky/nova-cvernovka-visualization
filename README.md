@@ -20,13 +20,15 @@ Web application built with Node.js that displays a sankey diagram from Google Sh
 
 ## Installation
 1. Install dependencies using `npm install`
+1. Register the app with google (follow [this tutorial](https://www.passportjs.org/tutorials/google/register/) for example). You will also obtain values for `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` env variables
+1. Enable google sheets API and obtain `GOOGLE_SHEETS_API_KEY` key [tutorial](https://developers.google.com/sheets/api/quickstart/nodejs)
 1. Set the following environment variables:
    - `PORT=80`
    - `GOOGLE_CLIENT_ID=your_google_client_id`
    - `GOOGLE_CLIENT_SECRET=your_google_client_secret`
    - `GOOGLE_SHEETS_API_KEY=your_google_sheets_api_key`
    - `EXPRESS_SESSION_SECRET=your_session_secret` (anything)
-   - `SPREADSHEET_ID=your_spreadsheet_id`
+   - `SPREADSHEET_ID=your_spreadsheet_id` (get it by visiting the spreadsheet and copying it from URL: `https://docs.google.com/spreadsheets/d/<SPREADSHEET_ID>`)
 1. Run the application using `npm start`
 
 ## Usage
